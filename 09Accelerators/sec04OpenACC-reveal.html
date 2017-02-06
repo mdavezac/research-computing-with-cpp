@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <title>Using Compiler Directives</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; background-color: #303030; color: #cccccc; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+td.sourceCode { padding-left: 5px; }
+pre, code { color: #cccccc; background-color: #303030; }
+code > span.kw { color: #f0dfaf; }
+code > span.dt { color: #dfdfbf; }
+code > span.dv { color: #dcdccc; }
+code > span.bn { color: #dca3a3; }
+code > span.fl { color: #c0bed1; }
+code > span.ch { color: #dca3a3; }
+code > span.st { color: #cc9393; }
+code > span.co { color: #7f9f7f; }
+code > span.ot { color: #efef8f; }
+code > span.al { color: #ffcfaf; }
+code > span.fu { color: #efef8f; }
+code > span.er { color: #c3bf9f; }
+    </style>
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/theme/night.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//css/ucl_reveal.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//site-styles/reveal.css"/>
+  <link rel="stylesheet" media="print" href="http://lab.hakim.se/reveal-js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="http://lab.hakim.se/reveal-js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Using Compiler Directives</h1>
+    <h3 class="date"></h3>
+</section>
+
+<section><section id="using-compiler-directives" class="titleslide slide level2"><h1>Using Compiler Directives</h1></section><section id="openacc" class="slide level3">
+<h1>OpenACC</h1>
+<ul>
+<li>OpenACC is a set of compiler directives that execute blocks of code on an accelerator
+<ul>
+<li>not specific to GPUs</li>
+<li>also works with APU (AMD), Xeon Phi (Intel), etc.</li>
+</ul></li>
+<li>Set of compiler <code>#pragma</code>s to specify:
+<ul>
+<li>blocks of code to be run on an accelerator</li>
+<li>data movement between host and accelerator</li>
+</ul></li>
+<li>Similar to OpenMP
+<ul>
+<li>doesn't modify existing code</li>
+<li>is ignored by compilers that don't support it</li>
+</ul></li>
+<li>Requires compiler support
+<ul>
+<li>pgic (non-free, activate with <code>-acc</code> flag)</li>
+<li>gcc support coming</li>
+</ul></li>
+</ul>
+</section><section id="openacc-pragmas" class="slide level3">
+<h1>OpenACC Pragmas</h1>
+<ul>
+<li><code>#pragma acc kernels</code> specifies a block of code to be run in parallel on an accelerator
+<ul>
+<li>uses a lot of autodetection</li>
+</ul></li>
+<li><code>#pragma acc data</code> specifies data movement between host and accelerator
+<ul>
+<li>can be used to control data movement between kernel calls</li>
+</ul></li>
+<li>Each pragma can be customised with clauses that appear at the end of the line
+<ul>
+<li><code>#pragma acc &lt;pragma&gt; [clause...]</code></li>
+</ul></li>
+</ul>
+</section><section id="openacc-pragma-clauses" class="slide level3">
+<h1>OpenACC Pragma Clauses</h1>
+<ul>
+<li><code>if(condition)</code>
+<ul>
+<li>executes only if the condition evaluates to true</li>
+<li>falls back to CPU code otherwise</li>
+<li>can be applied to both kernels and data pragmas among others</li>
+</ul></li>
+</ul>
+</section><section id="clauses-specific-to-pragma-acc-kernel" class="slide level3">
+<h1>Clauses specific to pragma acc kernel</h1>
+<ul>
+<li><code>num_gangs(n)</code>
+<ul>
+<li>specifies the number of thread blocks to use</li>
+</ul></li>
+<li><code>num_workers(n)</code>
+<ul>
+<li>specifies the number of threads to use in each block</li>
+</ul></li>
+<li><code>reduction(op, val)</code>
+<ul>
+<li>performs a reduction using the specified operator and initial value</li>
+<li>similar to OpenMP's <code>reduce</code> pragma</li>
+</ul></li>
+</ul>
+</section><section id="general-clauses-for-data-movement" class="slide level3">
+<h1>General clauses for data movement</h1>
+<ul>
+<li><code>copy(var1,var2,...)</code>
+<ul>
+<li>allocates and copies variables from the host to the accelerator before a block</li>
+<li>copies variables back to the host and deallocates after a block</li>
+</ul></li>
+<li><code>copyin(var1,var2,...)</code> and <code>copyout(var1,var2,...)</code>
+<ul>
+<li>copies data onto the accelerator at the start of a block or off the accelerator at the end of a block</li>
+</ul></li>
+<li><code>create(var1,var2,...)</code>, <code>delete(var1,var2,...)</code>
+<ul>
+<li>allocates variables on the accelerator at the start of a block and deallocates them at the end</li>
+<li>useful for temporary arrays</li>
+</ul></li>
+<li><code>present(var1,var2,...)</code>
+<ul>
+<li>variable is already present on device so don't allocate or copy</li>
+<li>also available as <code>present_or_copy</code>, <code>present_or_create</code>, <code>present_or_copyin</code>, <code>present_or_copyout</code></li>
+</ul></li>
+<li><code>private(var1,var2,...)</code>
+<ul>
+<li>variable is copied to each thread (similarly to OpenMP's <code>private</code>)</li>
+</ul></li>
+</ul>
+</section><section id="openacc-saxpy" class="slide level3">
+<h1>OpenACC SAXPY</h1>
+<ul>
+<li>The following code snippet implements a SAXPY kernel using OpenACC:</li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+<span class="dt">void</span> saxpy(<span class="dt">int</span> n, <span class="dt">float</span> a, <span class="dt">const</span> <span class="dt">float</span> * x, <span class="dt">int</span> incx, <span class="dt">float</span> restrict * y, <span class="dt">int</span> incy) {
+<span class="ot">#pragma acc kernels</span>
+  <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; n; ++i)
+    y[i * incy] = a * x[i * incx] + y[i * incy];
+}</code></pre>
+<ul>
+<li>The only pragma required is the <code>kernels</code> pragma which turns the <code>for</code> loop into a GPU kernel</li>
+</ul>
+</section><section id="openacc-sgemm" class="slide level3">
+<h1>OpenACC SGEMM</h1>
+<ul>
+<li>OpenACC can also be used to implement an SGEMM kernel:</li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+<span class="dt">void</span> sgemm(<span class="dt">int</span> m, <span class="dt">int</span> n, <span class="dt">int</span> k,
+           <span class="dt">float</span> a, <span class="dt">const</span> <span class="dt">float</span> * restrict A, <span class="dt">int</span> lda, <span class="dt">const</span> <span class="dt">float</span> * restrict B, <span class="dt">int</span> ldb,
+           <span class="dt">float</span> b, <span class="dt">float</span> restrict * C, <span class="dt">int</span> ldc) {
+<span class="ot">#pragma acc kernels</span>
+  <span class="kw">for</span> (<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; n; j++) {
+      <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; i++)
+          C[j * ldc + i] *= b;
+
+      <span class="kw">for</span> (<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; k; l++) {
+          <span class="dt">const</span> <span class="dt">float</span> temp = a * B[j * ldb + k];
+          <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; i++)
+              C[j * ldc + i] += temp * A[l * lda + i];
+      }
+  }
+}</code></pre>
+</section><section id="further-information" class="slide level3">
+<h1>Further Information</h1>
+<ul>
+<li>Further information (documentation/tutorials) is available on the (OpenACC website)[http://www.openacc-standard.org/]</li>
+</ul>
+</section></section>
+    </div>
+  </div>
+
+  <script src="http://lab.hakim.se/reveal-js/lib/js/head.min.js"></script>
+  <script src="http://lab.hakim.se/reveal-js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'night', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'http://lab.hakim.se/reveal-js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>

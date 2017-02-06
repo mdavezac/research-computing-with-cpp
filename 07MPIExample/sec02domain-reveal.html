@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <title>Domain decomposition</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/theme/night.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//css/ucl_reveal.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//site-styles/reveal.css"/>
+  <link rel="stylesheet" media="print" href="http://lab.hakim.se/reveal-js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="http://lab.hakim.se/reveal-js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Domain decomposition</h1>
+    <h3 class="date"></h3>
+</section>
+
+<section><section id="domain-decomposition" class="titleslide slide level2"><h1>Domain decomposition</h1></section><section id="domain-decomposition-1" class="slide level3">
+<h1>Domain decomposition</h1>
+<p>One of the most important problems in designing a parallel code is &quot;Domain Decomposition&quot;:</p>
+<ul>
+<li>How will I divide up the calculation between processes?</li>
+</ul>
+<p>Design objectives in decomposition are:</p>
+<ul>
+<li>Minimise communication</li>
+<li>Optimise load balance (Share out work evenly)</li>
+</ul>
+</section><section id="decomposing-smooth-life" class="slide level3">
+<h1>Decomposing Smooth Life</h1>
+<p>We'll go for a 1-d spatial decomposition for smooth life, dividing the domain into &quot;Stripes&quot; along the x-axis.</p>
+<p>If we have an <span class="math">\(N\)</span> by <span class="math">\(M\)</span> domain, and <span class="math">\(p\)</span>, processes, each process will be responsible for <span class="math">\(NM/p\)</span> cells, and <span class="math">\(NMr^2/p\)</span> calculations.</p>
+</section><section id="static-and-dynamic-balance" class="slide level3">
+<h1>Static and dynamic balance</h1>
+<p>This will achieve perfect <strong>static</strong> load balance: the average work done by each process is the same. If we were not solving in a rectangular grid, this would have been harder.</p>
+<p>However, since the calculation can (perhaps) be done quicker when the domain is empty, and our field will vary as time passes, we will not achieve perfect <strong>dynamic</strong> load balance.</p>
+</section><section id="communication-in-smooth-life" class="slide level3">
+<h1>Communication in Smooth Life</h1>
+<p>Given that each cell needs to know the state of cells within a range <span class="math">\(r=3r_d\)</span>, where <span class="math">\(r_d\)</span> is the inner radius of the neighbourhood ring, and <span class="math">\(r\)</span> the outer radius, we need to get this information to the neighbouring sites.</p>
+<p>This is <em>great</em>: we only need to transfer information to neighbours, not all the other processes. Such &quot;local&quot; communication results in fast code.</p>
+<p>The amount of communication to take place each time step is proportional to <span class="math">\(rMp\)</span>, but assuming an appropriate network topology exists, each pair of neighbours can look after their communication at the same time, so communication will take time proportional to <span class="math">\(rMp/p\)</span>=<span class="math">\(rM\)</span>.</p>
+</section><section id="strong-scaling" class="slide level3">
+<h1>Strong scaling</h1>
+<p>We therefore expect the time taken for a simulation to vary like: <span class="math">\(Mr(k+Nr/p)\)</span>. (Where <span class="math">\(k\)</span> is a parameter describing the relative time to communicate one cell's state compared to the time for calculating one cell )</p>
+<p>Thus, we see that for a FIXED problem size, the benefit of parallelism will disappear and communication will dominate: this is Amdahl's law again.</p>
+</section><section id="weak-scaling" class="slide level3">
+<h1>Weak scaling</h1>
+<p>However, if we consider larger and larger problems, growing <span class="math">\(N\)</span> as <span class="math">\(p\)</span> grows, then we can stop communication overtaking us. This is a common outcome: <em>local</em> problems provide perfect <em>weak</em> scaling (until network congestion or IO problems dominate).</p>
+<p>Any NONLOCAL communication, where the total amount of time for communication to take place grows as the number of processes does (such as a gather, which takes <span class="math">\(p\)</span>, a reduction, like <span class="math">\(ln(p)\)</span>, or an all-to-all, like <span class="math">\(p^2\)</span>, means that perfect weak scaling can't be achieved.)</p>
+</section></section>
+    </div>
+  </div>
+
+  <script src="http://lab.hakim.se/reveal-js/lib/js/head.min.js"></script>
+  <script src="http://lab.hakim.se/reveal-js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'night', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'http://lab.hakim.se/reveal-js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>

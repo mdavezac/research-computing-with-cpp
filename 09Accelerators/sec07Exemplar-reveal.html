@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <title>Another CUDA Example</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/theme/night.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//css/ucl_reveal.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//site-styles/reveal.css"/>
+  <link rel="stylesheet" media="print" href="http://lab.hakim.se/reveal-js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="http://lab.hakim.se/reveal-js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Another CUDA Example</h1>
+    <h3 class="date"></h3>
+</section>
+
+<section><section id="another-cuda-example" class="titleslide slide level2"><h1>Another CUDA Example</h1></section><section id="monte-carlo-pi" class="slide level3">
+<h1>Monte Carlo PI</h1>
+<ul>
+<li>There's a very slow way to calculate <span class="math">\(\pi\)</span> using a fair random number generator.</li>
+<li>Consider throwing darts at a square wall with a dartboard in the middle.</li>
+<li>Your darts are evenly distributed inside the square of side <span class="math">\(2r\)</span></li>
+<li>The chance of a dart hitting the dartboard is <span class="math">\(\pi r^2/4r^2\)</span> = <span class="math">\(\pi/4\)</span></li>
+</ul>
+</section><section id="monte-carlo-pi-1" class="slide level3">
+<h1>Monte Carlo Pi</h1>
+<ul>
+<li>On each core, generate a random x- and y- coordinate in <span class="math">\([0,1)\)</span></li>
+<li>Sum-square them, determine if <span class="math">\(&lt;1\)</span></li>
+<li>Reduce on mean</li>
+<li>Result is pi</li>
+</ul>
+</section><section id="cuda-with-mpi" class="slide level3">
+<h1>CUDA with MPI</h1>
+<ul>
+<li>The <a href="http://www.cfi.ses.ac.uk/emerald/">Emerald</a> supercomputer has a GPU on every node.</li>
+<li>So we can use MPI with CUDA</li>
+<li>The world's fastest computers use accelerators in conjuction with MPI</li>
+</ul>
+</section><section id="lets-implement-this-using-cuda-and-thrust." class="slide level3">
+<h1>Let's implement this using CUDA and thrust.</h1>
+<ul>
+<li><a href="https://github.com/UCL-RITS/emerald_play/blob/master/thrust_monte_pi/monte_pi.cu">See GitHub</a></li>
+</ul>
+</section></section>
+    </div>
+  </div>
+
+  <script src="http://lab.hakim.se/reveal-js/lib/js/head.min.js"></script>
+  <script src="http://lab.hakim.se/reveal-js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'night', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'http://lab.hakim.se/reveal-js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>

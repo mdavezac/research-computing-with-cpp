@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <title>CUDA Thrust</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/reveal.min.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; background-color: #303030; color: #cccccc; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; }
+td.sourceCode { padding-left: 5px; }
+pre, code { color: #cccccc; background-color: #303030; }
+code > span.kw { color: #f0dfaf; }
+code > span.dt { color: #dfdfbf; }
+code > span.dv { color: #dcdccc; }
+code > span.bn { color: #dca3a3; }
+code > span.fl { color: #c0bed1; }
+code > span.ch { color: #dca3a3; }
+code > span.st { color: #cc9393; }
+code > span.co { color: #7f9f7f; }
+code > span.ot { color: #efef8f; }
+code > span.al { color: #ffcfaf; }
+code > span.fu { color: #efef8f; }
+code > span.er { color: #c3bf9f; }
+    </style>
+    <link rel="stylesheet" href="http://lab.hakim.se/reveal-js/css/theme/night.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//css/ucl_reveal.css"/>
+    <link rel="stylesheet" href="/research-computing-with-cpp//site-styles/reveal.css"/>
+  <link rel="stylesheet" media="print" href="http://lab.hakim.se/reveal-js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="http://lab.hakim.se/reveal-js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">CUDA Thrust</h1>
+    <h3 class="date"></h3>
+</section>
+
+<section><section id="cuda-thrust" class="titleslide slide level2"><h1>CUDA Thrust</h1></section><section id="cuda-thrust-1" class="slide level3">
+<h1>CUDA Thrust</h1>
+<ul>
+<li>CUDA Thrust is a C++ template library of parallel algorithms and data structures based on the STL
+<ul>
+<li>sort, scan, transform and reduction algorithms</li>
+<li>uses <code>host_vector</code> and <code>device_vector</code> templated types modelled on <code>std::vector</code></li>
+<li>supports GPUs via CUDA and CPUs via OpenMP through the same interface</li>
+<li>all headers in the <code>thrust</code> subdirectory</li>
+<li>all data structures and algorithms declared in the <code>thrust</code> namespace</li>
+</ul></li>
+<li>Open source using the Apache License
+<ul>
+<li>supplied with the Nvidia CUDA Toolkit</li>
+<li>source code on GitHub</li>
+</ul></li>
+</ul>
+</section><section id="vector-types" class="slide level3">
+<h1>Vector types</h1>
+<ul>
+<li><code>template &lt;class T&gt; class thrust::host_vector</code>
+<ul>
+<li>declared in <code>#include &lt;thrust/host_vector.h&gt;</code></li>
+<li>similar to <code>std::vector</code> using CPU memory</li>
+</ul></li>
+<li><code>template &lt;class T&gt; class thrust::device_vector</code>
+<ul>
+<li>declared in <code>#include &lt;thrust/device_vector.h&gt;</code></li>
+<li>similar to <code>std::vector</code> but using GPU memory</li>
+</ul></li>
+</ul>
+</section><section id="vector-types-constructors" class="slide level3">
+<h1>Vector types: Constructors</h1>
+<ul>
+<li>The following code fragment shows the three constructors available for <code>host_vector</code></li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// Creates an empty host vector to store double values</span>
+thrust::host_vector&lt;<span class="dt">double</span>&gt; F;
+
+<span class="co">// Creates a host vector with space for 4 integers</span>
+thrust::host_vector&lt;<span class="dt">int</span>&gt; H(<span class="dv">4</span>);
+
+<span class="co">// Creates a host vector containing 8 floats each initialised to 2.5</span>
+thrust::host_vector&lt;<span class="dt">float</span>&gt; J(<span class="dv">8</span>, <span class="fl">2.5</span>);</code></pre>
+<ul>
+<li><code>device_vector</code>s have the same constructors but with storage allocated in GPU memory</li>
+</ul>
+</section><section id="vector-types-copy-constructors" class="slide level3">
+<h1>Vector types: Copy Constructors</h1>
+<ul>
+<li><p>There are four copy constructors for both <code>device_vector</code> and <code>host_vector</code></p>
+<ul>
+<li>copy from a vector of the same template type</li>
+</ul></li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+thrust::host_vector&lt;<span class="dt">int</span>&gt; H1;
+thrust::host_vector&lt;<span class="dt">int</span>&gt; H2(H1);</code></pre>
+<pre><code>- copy from a vector of a different template type</code></pre>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+thrust::host_vector&lt;<span class="dt">float</span>&gt; H(<span class="dv">5</span>);
+thrust::host_vector&lt;<span class="dt">double</span>&gt; D(H);</code></pre>
+<pre><code>- copy a device_vector from a host_vector (or vice versa)</code></pre>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+thrust::host_vector&lt;<span class="dt">int</span>&gt; H;
+thrust::device_vector&lt;<span class="dt">int</span>&gt; D(H);</code></pre>
+<pre><code>- create a copy of an STL vector</code></pre>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+std::vector&lt;<span class="dt">int</span>&gt; stl_vector;
+thrust::device_vector&lt;<span class="dt">int</span>&gt; D(stl_vector);</code></pre>
+<ul>
+<li>Each copy constructor also has a corresponding assignment operator</li>
+</ul>
+</section><section id="vector-types-accessors" class="slide level3">
+<h1>Vector types: Accessors</h1>
+<ul>
+<li>The <code>[]</code> operator has been overloaded for <code>device_vector</code> and <code>host_vector</code></li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">thrust::device_vector&lt;<span class="dt">int</span>&gt; D(<span class="dv">4</span>,<span class="dv">0</span>);
+D[<span class="dv">0</span>] = <span class="dv">99</span>; 
+D[<span class="dv">1</span>] = <span class="dv">88</span>;</code></pre>
+<ul>
+<li>Be careful when accessing the elements of a <code>device_vector</code> from host code as each one performs a transfer from GPU memory</li>
+</ul>
+</section><section id="algorithms" class="slide level3">
+<h1>Algorithms</h1>
+<ul>
+<li>In addition to the two vector data types, Thrust also implements several templated algorithms
+<ul>
+<li>transform</li>
+<li>reduce</li>
+<li>transform_reduce</li>
+<li>sort</li>
+<li>search</li>
+</ul></li>
+</ul>
+</section><section id="algorithms-transform" class="slide level3">
+<h1>Algorithms: transform</h1>
+<ul>
+<li>The transform algorithm is declared in <code>thrust/transform.h</code></li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">thrust::device_vector&lt;<span class="dt">int</span>&gt; X(<span class="dv">10</span>); 
+thrust::device_vector&lt;<span class="dt">int</span>&gt; Y(<span class="dv">10</span>); 
+
+<span class="co">// initialize X to 0,1,2,3, .... </span>
+thrust::sequence(X.begin(), X.end()); 
+
+<span class="co">//compute Y = -X </span>
+<span class="co">// thrust::transform(first, last, result, unary_op);</span>
+thrust::transform(X.begin(), X.end(), Y.begin(), thrust::negate&lt;<span class="dt">int</span>&gt;());</code></pre>
+<ul>
+<li><code>transform</code> applies a unary_op functor to the elements between <code>first</code> and <code>last</code> and stores them in <code>result</code></li>
+</ul>
+</section><section id="algorithms-reduce" class="slide level3">
+<h1>Algorithms: reduce</h1>
+<ul>
+<li>The reduction algorithm is declared in <code>thrust/reduce.h</code></li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+thrust::device_vector&lt;<span class="dt">int</span>&gt; vec(<span class="dv">5</span>,<span class="dv">1</span>);
+<span class="co">//thrust::reduce(first, last, init, binary_op);</span>
+<span class="dt">int</span> sum = thrust::reduce(D.begin(), D.end(), (<span class="dt">int</span>) <span class="dv">0</span>, thrust::plus&lt;<span class="dt">int</span>&gt;());</code></pre>
+<ul>
+<li><code>reduce</code> applies a <code>binary_op</code> functor to the elements between <code>first</code> and <code>last</code> starting with <code>init</code> and returns the result</li>
+</ul>
+</section><section id="algorithms-transformreduce" class="slide level3">
+<h1>Algorithms: transform/reduce</h1>
+<ul>
+<li>The transform/reduce algorithm is declared in <code>thrust/transform_reduce.h</code>
+<ul>
+<li>it combines the transform and reduce algorithms</li>
+<li>first elements are transformed using <code>unary_op</code></li>
+<li>then reduced using <code>binary_op</code></li>
+</ul></li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">thrust::device_vector&lt;<span class="dt">int</span>&gt; d(<span class="dv">5</span>)
+thrust::negate&lt;<span class="dt">float</span>&gt; unary_op; 
+thrust::plus&lt;<span class="dt">float</span>&gt; binary_op; 
+<span class="dt">float</span> init = <span class="dv">0</span>;
+
+thrust::transform_reduce(d.begin(), d.end(), unary_op, init, binary_op)</code></pre>
+</section><section id="thrust-saxpy" class="slide level3">
+<h1>Thrust SAXPY</h1>
+<ul>
+<li>We can use the <code>transform</code> algorithm from Thrust to implement our SAXPY kernel</li>
+</ul>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">
+<span class="kw">struct</span> saxpy_functor : <span class="kw">public</span> thrust::binary_function&lt;<span class="dt">float</span>, <span class="dt">float</span>, <span class="dt">float</span>&gt; {
+    
+    <span class="dt">const</span> <span class="dt">float</span> a;
+    
+    saxpy_functor(<span class="dt">float</span> _a) : a(_a) {}
+    
+    __host__ __device__ <span class="dt">float</span> <span class="kw">operator</span>()(<span class="dt">const</span> <span class="dt">float</span> &amp;x, <span class="dt">const</span> <span class="dt">float</span> &amp;y) <span class="dt">const</span> {
+        <span class="kw">return</span> a * x + y;
+    }
+};
+
+<span class="dt">void</span> saxpy(<span class="dt">const</span> <span class="dt">float</span> &amp; a, <span class="dt">const</span> thrust::device_vector&lt;<span class="dt">float</span>&gt; &amp; x, thrust::device_vector&lt;<span class="dt">float</span>&gt; &amp; y) {
+    thrust::transform(x.begin(), x.end(), y.begin(), y.begin(), saxpy_functor(a));
+}</code></pre>
+<pre><code>Bandwidth: 15.7344GB/s
+Throughput: 7.86722GFlops/s</code></pre>
+</section><section id="further-information" class="slide level3">
+<h1>Further Information</h1>
+<ul>
+<li>GitHub repository at <a href="https://github.com/thrust/thrust">https://github.com/thrust/thrust</a></li>
+<li>Documentation at <a href="https://thrust.github.io">https://thrust.github.io</a></li>
+<li>Legion scaffold at <a href="https://github.com/UCL-RITS/Legion-Fabric-Scaffold/blob/gpu/src/cuda_main.cu">https://github.com/UCL-RITS/Legion-Fabric-Scaffold/blob/gpu/src/cuda_main.cu</a></li>
+<li>Tutorial at <a href="http://docs.nvidia.com/cuda/thrust/">http://docs.nvidia.com/cuda/thrust/</a></li>
+</ul>
+</section></section>
+    </div>
+  </div>
+
+  <script src="http://lab.hakim.se/reveal-js/lib/js/head.min.js"></script>
+  <script src="http://lab.hakim.se/reveal-js/js/reveal.min.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'night', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'http://lab.hakim.se/reveal-js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'http://lab.hakim.se/reveal-js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'http://lab.hakim.se/reveal-js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
